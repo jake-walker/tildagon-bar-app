@@ -1,0 +1,74 @@
+{
+  "kegs": [
+    {
+      "type": "stockitem",
+      "key": "stockitem/3",
+      "id": 3,
+      "stocktype": {
+        "type": "stocktype",
+        "key": "stocktype/1",
+        "id": 1,
+        "department": {
+          "type": "department",
+          "id": 20,
+          "description": "Craft Keg",
+          "notes": null
+        },
+        "manufacturer": "Milton",
+        "name": "Dynamo",
+        "abv": "3.9",
+        "fullname": "Milton Dynamo (3.9% ABV)",
+        "price": "5.00",
+        "logo": "/media/emf/product-logos/f6ecbcf8bac0d2ac95791a9aad246666fe2c3a48924966145f914d8b645cc4f7.png",
+        "tasting_notes": null,
+        "base_units_bought": "1056.0",
+        "base_units_remaining": "1056.0",
+        "base_unit_name": "pint",
+        "sale_unit_name": "pint",
+        "sale_unit_name_plural": "pints",
+        "base_units_per_sale_unit": "1.0",
+        "stock_unit_name": "pint",
+        "stock_unit_name_plural": "pints",
+        "base_units_per_stock_unit": "1.0"
+      },
+      "remaining": "88.0",
+      "size": "88.0",
+      "remaining_pct": "89.00"
+    },
+    {
+      "type": "stockitem",
+      "key": "stockitem/4",
+      "id": 4,
+      "stocktype": {
+        "type": "stocktype",
+        "key": "stocktype/2",
+        "id": 2,
+        "department": {
+          "type": "department",
+          "id": 20,
+          "description": "Craft Keg",
+          "notes": null
+        },
+        "manufacturer": "Camden",
+        "name": "Hells",
+        "abv": "5.0",
+        "fullname": "Milton Dynamo (5.0% ABV)",
+        "price": "5.00",
+        "logo": "/media/emf/product-logos/f6ecbcf8bac0d2ac95791a9aad246666fe2c3a48924966145f914d8b645cc4f7.png",
+        "tasting_notes": null,
+        "base_units_bought": "1056.0",
+        "base_units_remaining": "1056.0",
+        "base_unit_name": "pint",
+        "sale_unit_name": "pint",
+        "sale_unit_name_plural": "pints",
+        "base_units_per_sale_unit": "1.0",
+        "stock_unit_name": "pint",
+        "stock_unit_name_plural": "pints",
+        "base_units_per_stock_unit": "1.0"
+      },
+      "remaining": "88.0",
+      "size": "88.0",
+      "remaining_pct": "100.00"
+    }
+  ]
+}
