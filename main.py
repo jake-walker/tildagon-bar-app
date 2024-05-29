@@ -6,7 +6,7 @@ from app_components import Menu, clear_background, line_height, one_pt
 from events.input import Buttons
 
 ENDPOINT_URLS = {
-    "main": "https://bar.emf.camp/api/on-tap.json",
+    "robot_arms": "https://bar.emf.camp/api/on-tap.json",
     "cybar": "https://bar.emf.camp/api/cybar-on-tap.json",
 }
 
@@ -15,7 +15,7 @@ class BarApp(app.App):
     data = {}
 
     # what bar to get data for - main/cybar
-    bar = "main"
+    bar = "robot_arms"
     # what drink category - first level of data keys
     category = None
 
@@ -76,10 +76,10 @@ class BarApp(app.App):
         if self.category is None:
             # main menu
             if item.startswith("Bar:"):
-                if self.bar == "main":
+                if self.bar == "robot_arms":
                     self.bar = "cybar"
                 else:
-                    self.bar = "main"
+                    self.bar = "robot_arms"
 
                 self._refresh_data()
                 return
