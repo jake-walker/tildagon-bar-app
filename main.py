@@ -1,8 +1,14 @@
+import json
+
 import app
-import ujson
 import urequests
 from app_components import Menu, clear_background, line_height, one_pt
 from events.input import Buttons
+
+ENDPOINT_URLS = {
+    "main": "https://bar.emf.camp/api/on-tap.json",
+    "cybar": "https://bar.emf.camp/api/cybar-on-tap.json",
+}
 
 
 class BarApp(app.App):
@@ -12,13 +18,11 @@ class BarApp(app.App):
     bar = "main"
     # what drink category - first level of data keys
     category = None
-    # what drink index within the category
-    drink_index = None
 
     # font size for main menu
     main_menu_font_size = 12
     # font size for drink and drink details menus
-    sub_menu_font_size = 6
+    sub_menu_font_size = 7
 
     error = None
 
@@ -43,21 +47,10 @@ class BarApp(app.App):
             self.menu.focused_item_font_size = (self.main_menu_font_size + 4) * one_pt
             self.menu.item_line_height = self.menu.item_font_size * line_height
         else:
-            # drinks menu or drink details
+            # drinks menu
             self.menu.item_font_size = self.sub_menu_font_size * one_pt
-            self.menu.focused_item_font_size = (self.sub_menu_font_size + 4) * one_pt
-            self.menu.item_line_height = self.menu.item_font_size * 1.1
-
-        # set the menu items for a selected drink
-        if self.drink_index is not None:
-            drink = self.data[self.category][self.drink_index]
-            self.menu.menu_items = [
-                f"{drink['stocktype']['manufacturer']} {drink['stocktype']['name']}",
-                f"{drink['stocktype']['abv']}% ABV",
-                f"{float(drink['remaining_pct']):.01f}% Remaining",
-                f"£{drink['stocktype']['price']}/{drink['stocktype']['sale_unit_name']}",
-            ]
-            return
+            self.menu.focused_item_font_size = self.sub_menu_font_size * one_pt
+            self.menu.item_line_height = self.menu.item_font_size * 2.1
 
         # set the menu items for the main menu
         if self.category is None:
@@ -74,7 +67,7 @@ class BarApp(app.App):
         # set the menu items for drinks in the category
         self.menu.menu_items = list(
             [
-                (item["stocktype"]["manufacturer"] + " " + item["stocktype"]["name"])
+                f"{item['stocktype']['fullname']}\n£{item['stocktype']['price']}/{item['stocktype']['sale_unit_name']}, {float(item['remaining_pct']):.1f}% remaining"
                 for item in self.data[self.category]
             ]
         )
@@ -96,26 +89,29 @@ class BarApp(app.App):
 
             # convert the item back to lower (as it is converted to title when displayed)
             self.category = item.lower()
-        elif self.drink_index is None:
-            self.drink_index = self.menu.position
 
         self.update_menu()
 
     def back_handler(self):
-        if self.drink_index is not None:
-            # if in drink details, unsetting the drink id takes back to the drinks list
-            self.drink_index = None
-            self.update_menu()
-        elif self.category is not None:
+        if self.category is None or self.error is not None:
+            self.minimise()
+
+        if self.category is not None:
             # if in drinks list, unsetting the category goes back to the main menu
             self.category = None
             self.update_menu()
-        else:
-            # if at the main menu, quit the app
-            self.minimise()
 
     def draw(self, ctx):
         clear_background(ctx)
+
+        if self.error:
+            ctx.text_align = ctx.CENTER
+            ctx.font_size = self.main_menu_font_size * one_pt
+            ctx.rgb(1, 0, 0).move_to(0, -10).text("Error!")
+            ctx.font_size = self.sub_menu_font_size * one_pt
+            ctx.rgb(1, 0, 0).move_to(0, 10).text(self.error)
+            return
+
         self.menu.draw(ctx)
 
     def update(self, delta):
@@ -123,12 +119,15 @@ class BarApp(app.App):
 
     def _refresh_data(self):
         try:
-            bar_json = urequests.get("http://localhost:8000/api/on-tap.json")
-            # todo: confirm ujson is on the badge
-            self.data = ujson.loads(bar_json.text)
-        except:  # noqa
-            # todo: show this error message somewhere
-            self.error = "Could not get bar data"
+            bar_json = urequests.get(ENDPOINT_URLS[self.bar])
+            self.data = json.loads(bar_json.text)
+        except Exception as ex:
+            print("Failed to get bar data", ex)
+            self.error = (
+                "Could not get bar data!\n"
+                "Make sure you are connected to\n"
+                "the internet."
+            )
             self.data = {}
 
         self.sub_menu = None
