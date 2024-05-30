@@ -72,7 +72,7 @@ class BarApp(app.App):
             ]
         )
 
-    def select_handler(self, item):
+    def select_handler(self, item, _):
         if self.category is None:
             # main menu
             if item.startswith("Bar:"):
@@ -132,3 +132,6 @@ class BarApp(app.App):
 
         self.sub_menu = None
         self.update_menu()
+
+
+__app_export__ = BarApp
