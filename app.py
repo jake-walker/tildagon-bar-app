@@ -1,7 +1,7 @@
 import json
 
 import app
-import urequests
+import requests
 from app_components import Menu, clear_background, line_height, one_pt
 from events.input import Buttons
 
@@ -55,7 +55,7 @@ class BarApp(app.App):
         # set the menu items for the main menu
         if self.category is None:
             self.menu.menu_items = [
-                category.title() for category in self.data.keys()
+                category for category in self.data.keys()
             ] + [f"Bar: {self.bar}", "Refresh"]
             return
 
@@ -87,8 +87,7 @@ class BarApp(app.App):
                 self._refresh_data()
                 return
 
-            # convert the item back to lower (as it is converted to title when displayed)
-            self.category = item.lower()
+            self.category = item
 
         self.update_menu()
 
@@ -112,23 +111,15 @@ class BarApp(app.App):
             ctx.rgb(1, 0, 0).move_to(0, 10).text(self.error)
             return
 
+        ctx.text_align = ctx.CENTER
         self.menu.draw(ctx)
 
     def update(self, delta):
         self.menu.update(delta)
 
     def _refresh_data(self):
-        try:
-            bar_json = urequests.get(ENDPOINT_URLS[self.bar])
-            self.data = json.loads(bar_json.text)
-        except Exception as ex:
-            print("Failed to get bar data", ex)
-            self.error = (
-                "Could not get bar data!\n"
-                "Make sure you are connected to\n"
-                "the internet."
-            )
-            self.data = {}
+        bar_json = requests.get(ENDPOINT_URLS[self.bar])
+        self.data = json.loads(bar_json.text)
 
         self.sub_menu = None
         self.update_menu()
