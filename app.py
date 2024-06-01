@@ -19,6 +19,7 @@ class BarApp(app.App):
     bar = "robot_arms"
     # what drink category - first level of data keys
     category = None
+    loading = False
 
     error = None
 
@@ -104,11 +105,14 @@ class BarApp(app.App):
     def draw(self, ctx):
         clear_background(ctx)
 
+        if self.loading:
+            ctx.text_align = ctx.CENTER
+            ctx.gray(1).move_to(0, 0).text("Loading...")
+            return
+
         if self.error:
             ctx.text_align = ctx.CENTER
-            ctx.font_size = self.main_menu_font_size * one_pt
             ctx.rgb(1, 0, 0).move_to(0, -10).text("Error!")
-            ctx.font_size = self.sub_menu_font_size * one_pt
             ctx.rgb(1, 0, 0).move_to(0, 10).text(self.error)
             return
 
@@ -121,12 +125,26 @@ class BarApp(app.App):
     def update(self, delta):
         self.menu.update(delta)
 
-    def _refresh_data(self):
-        bar_json = requests.get(ENDPOINT_URLS[self.bar])
-        self.data = json.loads(bar_json.text)
+    def background_update(self, delta):
+        if self.loading:
+            print("loading start")
+            try:
+                bar_json = requests.get(ENDPOINT_URLS[self.bar])
+            except:
+                self.error = "Something went wrong\nloading bar data.\nPlease try again"
+                self.loading = False
+                self.update_menu()
+                return
 
-        self.sub_menu = None
-        self.update_menu()
+            self.data = json.loads(bar_json.text)
+
+            self.sub_menu = None
+            self.update_menu()
+            print("loading end")
+            self.loading = False
+
+    def _refresh_data(self):
+        self.loading = True
 
 
 __app_export__ = BarApp
