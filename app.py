@@ -2,8 +2,9 @@ import json
 
 import app
 import requests
-from app_components import Menu, clear_background, line_height, one_pt
-from events.input import Buttons
+from app_components import Menu, clear_background, line_height, one_pt, layout
+from events.input import Buttons, BUTTON_TYPES, ButtonDownEvent
+from system.eventbus import eventbus
 
 ENDPOINT_URLS = {
     "robot_arms": "https://bar.emf.camp/api/on-tap.json",
@@ -19,11 +20,6 @@ class BarApp(app.App):
     # what drink category - first level of data keys
     category = None
 
-    # font size for main menu
-    main_menu_font_size = 12
-    # font size for drink and drink details menus
-    sub_menu_font_size = 7
-
     error = None
 
     def __init__(self):
@@ -33,24 +29,16 @@ class BarApp(app.App):
             select_handler=self.select_handler,
             back_handler=self.back_handler,
         )
+        self.menu._cleanup()
+        self.layout = layout.LinearLayout(items=[])
         self.button_states = Buttons(self)
+        eventbus.on_async(ButtonDownEvent, self._button_handler, self)
         self._refresh_data()
 
     def update_menu(self):
         # this is set to zero to prevent it being larger than the number of items in the list
         self.menu.position = 0
-
-        # set the menu style
-        if self.category is None:
-            # main menu
-            self.menu.item_font_size = self.main_menu_font_size * one_pt
-            self.menu.focused_item_font_size = (self.main_menu_font_size + 4) * one_pt
-            self.menu.item_line_height = self.menu.item_font_size * line_height
-        else:
-            # drinks menu
-            self.menu.item_font_size = self.sub_menu_font_size * one_pt
-            self.menu.focused_item_font_size = self.sub_menu_font_size * one_pt
-            self.menu.item_line_height = self.menu.item_font_size * 2.1
+        self.layout.height = 0
 
         # set the menu items for the main menu
         if self.category is None:
@@ -61,16 +49,29 @@ class BarApp(app.App):
 
         # set the menu item for if there's no drinks in the category
         if len(self.data[self.category]) == 0:
-            self.menu.menu_items = ["Nothing here :("]
+            self.layout.items = [
+                layout.DefinitionDisplay("", "Nothing here :(")
+            ]
             return
 
         # set the menu items for drinks in the category
-        self.menu.menu_items = list(
-            [
-                f"{item['stocktype']['fullname']}\n£{item['stocktype']['price']}/{item['stocktype']['sale_unit_name']}, {float(item['remaining_pct']):.1f}% remaining"
-                for item in self.data[self.category]
-            ]
-        )
+        self.layout.items = []
+
+        for item in self.data[self.category]:
+            self.layout.items.append(layout.DefinitionDisplay(
+                f"£{item['stocktype']['price']}/{item['stocktype']['sale_unit_name']}, {float(item['remaining_pct']):.1f}% remaining",
+                item['stocktype']['fullname']
+            ))
+
+    async def _button_handler(self, event):
+        if BUTTON_TYPES["CANCEL"] in event.button:
+            self.back_handler()
+            return
+
+        if self.category is None:
+            self.menu._handle_buttondown(event)
+        else:
+            await self.layout.button_event(event)
 
     def select_handler(self, item, _):
         if self.category is None:
@@ -111,7 +112,10 @@ class BarApp(app.App):
             ctx.rgb(1, 0, 0).move_to(0, 10).text(self.error)
             return
 
-        ctx.text_align = ctx.CENTER
+        if self.category is not None:
+            self.layout.draw(ctx)
+            return
+
         self.menu.draw(ctx)
 
     def update(self, delta):
